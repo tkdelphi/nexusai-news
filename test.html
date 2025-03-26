@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        pre { background: #f5f5f5; padding: 10px; overflow: auto; }
+    </style>
+</head>
+<body>
+    <h1>API Test Page</h1>
+    <button onclick="testApi()">Test API</button>
+    <div id="result"></div>
+
+    <script>
+        function testApi() {
+            document.getElementById('result').innerHTML = 'Loading...';
+            
+            // Direct fetch to ensure we're using exactly the URL from the code
+            fetch('http://localhost:5001/api/articles')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Show the raw response
+                    const resultDiv = document.getElementById('result');
+                    resultDiv.innerHTML = `
+                        <h3>Success! Received ${data.articles ? data.articles.length : 0} articles</h3>
+                        <p>Last updated: ${data.lastUpdated}</p>
+                        <pre>${JSON.stringify(data.articles ? data.articles[0] : {}, null, 2)}</pre>
+                    `;
+                    
+                    // Also display the first article visually
+                    if (data.articles && data.articles.length > 0) {
+                        const article = data.articles[0];
+                        const articleDiv = document.createElement('div');
+                        articleDiv.innerHTML = `
+                            <div style="border: 1px solid #ccc; padding: 15px; margin-top: 20px;">
+                                <h2>${article.title}</h2>
+                                <p>From: ${article.source.name}</p>
+                                <img src="${article.image}" alt="${article.title}" style="max-width: 300px;">
+                                <p>${article.summary}</p>
+                                <a href="${article.link}" target="_blank">Read more</a>
+                            </div>
+                        `;
+                        resultDiv.appendChild(articleDiv);
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('result').innerHTML = `
+                        <h3 style="color: red;">Error</h3>
+                        <p>${error.message}</p>
+                    `;
+                    console.error('Error:', error);
+                });
+        }
+    </script>
+</body>
+</html>

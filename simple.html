@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple News Test</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .debug-info {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px;
+            font-family: monospace;
+            max-width: 100%;
+            overflow: auto;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>NexusAI - Simple Test</h1>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="container">
+            <h2>Direct API Test</h2>
+            <div>
+                <button id="loadLocal">Load from Local API</button>
+                <button id="loadSampleData">Load Sample Data</button>
+            </div>
+            
+            <div id="debug" class="debug-info"></div>
+            
+            <div id="content">
+                <div id="hero" class="hero-article">
+                    <div class="loading">Click a button to load content...</div>
+                </div>
+                
+                <h2>Articles</h2>
+                <div id="articles" class="article-grid">
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Debug logger
+        function log(message) {
+            const debug = document.getElementById('debug');
+            const timestamp = new Date().toISOString().substr(11, 8);
+            debug.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+            console.log(message);
+        }
+        
+        // Sample data
+        const SAMPLE_DATA = {
+            hero: {
+                id: 1,
+                title: "OpenAI Unveils GPT-5 with Unprecedented Multimodal Capabilities",
+                summary: "The latest model from OpenAI shows remarkable improvements in reasoning and visual understanding.",
+                image: "https://images.unsplash.com/photo-1677442135046-c10d516d84c6?q=80&w=1932&auto=format&fit=crop",
+                source: {
+                    name: 'TechCrunch',
+                    url: 'https://techcrunch.com',
+                    logo: 'https://techcrunch.com/wp-content/uploads/2015/02/cropped-cropped-favicon-gradient.png'
+                },
+                link: "https://techcrunch.com/ai/openai-gpt5-announcement"
+            },
+            articles: [
+                {
+                    id: 2,
+                    title: "EU Passes Comprehensive AI Regulation Framework",
+                    summary: "The European Union has finalized its AI Act, establishing the world's most stringent rules for AI.",
+                    image: "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?q=80&w=1770&auto=format&fit=crop",
+                    source: {
+                        name: 'MIT Technology Review',
+                        url: 'https://www.technologyreview.com',
+                        logo: 'https://www.technologyreview.com/favicon.ico'
+                    },
+                    link: "https://www.technologyreview.com/europe-ai-act-regulation"
+                },
+                {
+                    id: 3,
+                    title: "Google DeepMind's AlphaFold 3 Makes Breakthrough in Protein Structure Prediction",
+                    summary: "The latest iteration of AlphaFold can now predict protein interactions with unprecedented accuracy.",
+                    image: "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?q=80&w=1770&auto=format&fit=crop",
+                    source: {
+                        name: 'Wired',
+                        url: 'https://www.wired.com',
+                        logo: 'https://www.wired.com/favicon.ico'
+                    },
+                    link: "https://www.wired.com/google-deepmind-alphafold3"
+                }
+            ]
+        };
+        
+        // Render functions
+        function renderHero(article) {
+            const heroElement = document.getElementById('hero');
+            
+            heroElement.innerHTML = `
+                <img src="${article.image}" alt="${article.title}">
+                <div class="hero-article-content">
+                    <div class="source-info">
+                        <img src="${article.source.logo}" alt="${article.source.name}" class="source-logo">
+                        <span class="source-name">${article.source.name}</span>
+                    </div>
+                    <h2>${article.title}</h2>
+                    <p>${article.summary}</p>
+                    <a href="${article.link}" class="read-more" target="_blank">Read Full Article</a>
+                </div>
+            `;
+        }
+        
+        function renderArticles(articles) {
+            const articlesElement = document.getElementById('articles');
+            
+            articlesElement.innerHTML = articles.map(article => `
+                <div class="article-card">
+                    <img src="${article.image}" alt="${article.title}">
+                    <div class="article-card-content">
+                        <div class="source-info">
+                            <img src="${article.source.logo}" alt="${article.source.name}" class="source-logo">
+                            <span class="source-name">${article.source.name}</span>
+                        </div>
+                        <h3>${article.title}</h3>
+                        <p>${article.summary}</p>
+                        <a href="${article.link}" class="read-more" target="_blank">Read Full Article</a>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        // Load from local API
+        document.getElementById('loadLocal').addEventListener('click', async () => {
+            try {
+                log('Attempting to load from local API...');
+                
+                // Clear content
+                document.getElementById('hero').innerHTML = '<div class="loading">Loading hero...</div>';
+                document.getElementById('articles').innerHTML = '<div class="loading">Loading articles...</div>';
+                
+                // Get hero article
+                log('Fetching hero article from: http://localhost:5001/api/hero');
+                const heroResponse = await fetch('http://localhost:5001/api/hero');
+                
+                if (!heroResponse.ok) {
+                    throw new Error(`Hero request failed with status ${heroResponse.status}`);
+                }
+                
+                const heroData = await heroResponse.json();
+                log('Hero article fetched successfully');
+                
+                // Get articles
+                log('Fetching articles from: http://localhost:5001/api/articles');
+                const articlesResponse = await fetch('http://localhost:5001/api/articles?limit=5');
+                
+                if (!articlesResponse.ok) {
+                    throw new Error(`Articles request failed with status ${articlesResponse.status}`);
+                }
+                
+                const articlesData = await articlesResponse.json();
+                log('Articles fetched successfully');
+                
+                // Render content
+                if (heroData.article) {
+                    renderHero(heroData.article);
+                } else {
+                    log('Warning: No hero article in response');
+                }
+                
+                if (articlesData.articles && articlesData.articles.length > 0) {
+                    renderArticles(articlesData.articles);
+                } else {
+                    log('Warning: No articles in response');
+                }
+                
+            } catch (error) {
+                log(`Error: ${error.message}`);
+                document.getElementById('hero').innerHTML = `<div class="error">Error: ${error.message}</div>`;
+                document.getElementById('articles').innerHTML = '';
+            }
+        });
+        
+        // Load sample data
+        document.getElementById('loadSampleData').addEventListener('click', () => {
+            log('Loading sample data...');
+            renderHero(SAMPLE_DATA.hero);
+            renderArticles(SAMPLE_DATA.articles);
+        });
+        
+        // Log initial information
+        log(`Page loaded at ${new Date().toISOString()}`);
+        log(`Current location: ${window.location.href}`);
+    </script>
+</body>
+</html>

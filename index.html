@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusAI - Latest AI News & Insights</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="logo">
+                <h1>NexusAI</h1>
+            </div>
+            <nav>
+                <ul>
+                    <li><a href="#" class="active">Home</a></li>
+                    <li><a href="#">Latest</a></li>
+                    <li><a href="#">Topics</a></li>
+                    <li><a href="#">About</a></li>
+                </ul>
+            </nav>
+            <div class="theme-toggle">
+                <button id="theme-toggle-btn">
+                    <i class="fas fa-moon"></i>
+                    <i class="fas fa-sun"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero-section container">
+            <div id="hero-article" class="hero-article">
+                <!-- Hero article will be loaded here -->
+                <div class="loading">Loading headline article...</div>
+            </div>
+        </section>
+
+        <section class="featured-section container">
+            <h2>Latest AI News</h2>
+            <div id="featured-articles" class="article-grid">
+                <!-- Featured articles will be loaded here -->
+                <div class="loading">Loading articles...</div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>NexusAI</h2>
+                    <p>Your hub for the latest in artificial intelligence</p>
+                </div>
+                <div class="footer-links">
+                    <h3>Quick Links</h3>
+                    <ul>
+                        <li><a href="#">Home</a></li>
+                        <li><a href="#">Latest</a></li>
+                        <li><a href="#">Topics</a></li>
+                        <li><a href="#">About</a></li>
+                    </ul>
+                </div>
+                <div class="footer-newsletter">
+                    <h3>Stay Updated</h3>
+                    <p>Subscribe to our newsletter for weekly AI news</p>
+                    <div class="newsletter-form" id="constant-contact-footer">
+                        <!-- Constant Contact Form Widget -->
+                        <div class="ctct-inline-form" data-form-id="footer-form"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 NexusAI. All articles are sourced from public open news sources.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Constant Contact Popup -->
+    <div id="subscribe-popup" class="popup-container">
+        <div class="popup-content">
+            <span class="close-popup">&times;</span>
+            <h3>Stay Updated with AI News</h3>
+            <p>Get the latest AI news and insights delivered to your inbox weekly.</p>
+            <div class="ctct-inline-form" data-form-id="popup-form"></div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+    
+    <!-- Begin Constant Contact Active Forms -->
+    <script> var _ctct_m = "d83ddfbb9ab5969af853c3cccdc6729a"; </script>
+    <script id="signupScript" src="//static.ctctcdn.com/js/signup-form-widget/current/signup-form-widget.min.js" async defer></script>
+    <!-- End Constant Contact Active Forms -->
+    
+    <!-- Popup functionality -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show popup after 5 seconds
+            setTimeout(function() {
+                const popup = document.getElementById('subscribe-popup');
+                if (popup && !localStorage.getItem('popupShown')) {
+                    popup.style.display = 'flex';
+                }
+            }, 5000);
+            
+            // Close popup
+            const closeBtn = document.querySelector('.close-popup');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    document.getElementById('subscribe-popup').style.display = 'none';
+                    localStorage.setItem('popupShown', 'true');
+                });
+            }
+        });
+    </script>
+    <!-- Direct article loader script -->
+    <script>
+    // Direct article loading as a backup
+    window.addEventListener('load', function() {
+        // Check if articles have been loaded after 3 seconds
+        setTimeout(function() {
+            const heroArticle = document.getElementById('hero-article');
+            const featuredArticles = document.getElementById('featured-articles');
+            
+            // If still showing loading state, try to load directly
+            if (heroArticle.innerHTML.includes('Loading headline article...') ||
+                featuredArticles.innerHTML.includes('Loading articles...')) {
+                
+                console.log('Articles not loaded after timeout, trying direct fetch...');
+                
+                // Determine API base URL dynamically
+                const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                    ? 'http://localhost:5001'
+                    : ''; // Empty string means same domain for production
+                
+                console.log('Using API base URL:', apiBaseUrl);
+                
+                // Direct fetch for hero
+                fetch(`${apiBaseUrl}/api/hero`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.article) {
+                            renderHeroArticleDirect(data.article);
+                        }
+                    })
+                    .catch(err => console.error('Direct hero fetch failed:', err));
+                
+                // Direct fetch for articles
+                fetch(`${apiBaseUrl}/api/articles?limit=12`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.articles && data.articles.length > 0) {
+                            renderArticlesDirect(data.articles);
+                        }
+                    })
+                    .catch(err => console.error('Direct articles fetch failed:', err));
+            }
+        }, 3000); // Wait 3 seconds
+    });
+    
+    // Direct render functions
+    function renderHeroArticleDirect(article) {
+        const heroArticleElement = document.getElementById('hero-article');
+        
+        heroArticleElement.innerHTML = `
+            <img src="${article.image}" alt="${article.title}">
+            <div class="hero-article-content">
+                <div class="source-info">
+                    <img src="${article.source.logo}" alt="${article.source.name}" class="source-logo">
+                    <span class="source-name">${article.source.name}</span>
+                </div>
+                <h2>${article.title}</h2>
+                <a href="${article.link}" class="read-more" target="_blank">Read Full Article</a>
+            </div>
+        `;
+    }
+    
+    function renderArticlesDirect(articles) {
+        const featuredArticlesElement = document.getElementById('featured-articles');
+        
+        featuredArticlesElement.innerHTML = articles.map(article => `
+            <div class="article-card">
+                <img src="${article.image}" alt="${article.title}">
+                <div class="article-card-content">
+                    <div class="source-info">
+                        <img src="${article.source.logo}" alt="${article.source.name}" class="source-logo">
+                        <span class="source-name">${article.source.name}</span>
+                    </div>
+                    <h3>${article.title}</h3>
+                    <a href="${article.link}" class="read-more" target="_blank">Read Full Article</a>
+                </div>
+            </div>
+        `).join('');
+    }
+    </script>
+</body>
+</html>
