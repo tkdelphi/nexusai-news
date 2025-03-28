@@ -32,6 +32,77 @@
     box-sizing: border-box;
 }
 
+/* Top Banner for ForesightRadio */
+.top-banner {
+    background-color: #ff6b6b; /* Bright color to stand out */
+    padding: 10px 0;
+    text-align: center;
+    color: white;
+    font-weight: 600;
+    width: 100%;
+    position: relative;
+    z-index: 101; /* Above the header */
+}
+
+.banner-content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    padding: 0 20px;
+}
+
+.banner-content p {
+    margin: 0;
+}
+
+.banner-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.banner-button {
+    display: inline-block;
+    background-color: white;
+    color: #e74c3c;
+    padding: 5px 15px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.banner-button:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.site-info-banner-btn {
+    background-color: #f8f9fa;
+    color: #2d8e46;
+    border: 1px solid #2d8e46;
+}
+
+/* Make the banner responsive */
+@media (max-width: 576px) {
+    .banner-content {
+        flex-direction: column;
+        gap: 8px;
+        padding: 5px 0;
+    }
+    
+    .banner-content p {
+        font-size: 14px;
+    }
+}
+
 body {
     font-family: 'Inter', sans-serif;
     background-color: var(--bg-primary);
@@ -69,24 +140,56 @@ header .container {
     color: var(--accent-color);
 }
 
-nav ul {
+/* Ask Tom Digital Twin Navigation */
+.digital-twin-nav {
     display: flex;
-    list-style: none;
+    align-items: center;
 }
 
-nav ul li {
-    margin-left: 25px;
-}
-
-nav ul li a {
-    text-decoration: none;
-    color: var(--text-primary);
+.ask-tom {
+    display: flex;
+    align-items: center;
+    gap: 15px;
     font-weight: 500;
-    transition: color 0.3s ease;
 }
 
-nav ul li a:hover, nav ul li a.active {
-    color: var(--accent-color);
+.ask-tom span {
+    color: var(--text-primary);
+}
+
+.ask-tom-button {
+    display: inline-block;
+    background-color: var(--accent-color);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    border: none;
+    cursor: pointer;
+    margin-left: 8px;
+}
+
+.ask-tom-button:hover {
+    background-color: #3367d6; /* Darker shade of the accent color */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Responsive styles for the Ask Tom section */
+@media (max-width: 768px) {
+    .ask-tom {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+        padding: 10px 0;
+    }
+    
+    .ask-tom span {
+        font-size: 14px;
+    }
 }
 
 /* Theme Toggle Button */
@@ -433,6 +536,29 @@ footer {
 .popup-container p {
     margin-bottom: 20px;
     color: var(--text-secondary);
+}
+
+/* Site info popup specific styles */
+.site-info-details {
+    text-align: left;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.site-info-details ul {
+    margin-left: 20px;
+    margin-bottom: 20px;
+    color: var(--text-secondary);
+}
+
+.site-info-details li {
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+.site-info-content {
+    max-width: 600px;
+    width: 90%;
 }
 
 .popup-container form {

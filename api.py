@@ -139,28 +139,101 @@ def _extract_summary(entry):
 def _extract_image(entry):
     """Extract image URL from feed entry"""
     try:
-        # Check for media content
-        if 'media_content' in entry and entry.media_content:
+        # Method 1: Check for media_thumbnail
+        if hasattr(entry, 'media_thumbnail') and entry.media_thumbnail:
+            return entry.media_thumbnail[0]['url']
+            
+        # Method 2: Check for media content
+        if hasattr(entry, 'media_content') and entry.media_content:
             for media in entry.media_content:
                 if media.get('type', '').startswith('image/'):
                     return media['url']
+                # Some feeds don't specify type but still contain image URLs
+                if 'url' in media and (media['url'].endswith('.jpg') or 
+                                      media['url'].endswith('.jpeg') or 
+                                      media['url'].endswith('.png')):  
+                    return media['url']
         
-        # Check for enclosures
-        if 'enclosures' in entry and entry.enclosures:
+        # Method 3: Check for enclosures
+        if hasattr(entry, 'enclosures') and entry.enclosures:
             for enclosure in entry.enclosures:
                 if enclosure.get('type', '').startswith('image/'):
                     return enclosure.get('href', enclosure.get('url', ''))
         
-        # Parse HTML content for images
-        if 'summary' in entry:
-            soup = BeautifulSoup(entry.summary, 'html.parser')
-            img = soup.find('img')
-            if img and img.get('src'):
-                return img['src']
+        # Method 4: Check for content field
+        if hasattr(entry, 'content') and entry.content:
+            for content in entry.content:
+                if 'value' in content:
+                    soup = BeautifulSoup(content['value'], 'html.parser')
+                    img = soup.find('img')
+                    if img and img.get('src'):
+                        # Avoid small icons and tracking pixels
+                        if not (img.get('width') and int(img['width']) < 50) and not \
+                           (img.get('height') and int(img['height']) < 50):
+                            # Make sure we're not grabbing an icon or tiny image
+                            if not any(word in img['src'].lower() for word in ['icon', 'logo', 'avatar', 'button', 'pixel', 'tracking']):
+                                return img['src']
         
-        # Fallback to random image
-        return random.choice(FALLBACK_IMAGES)
-    except:
+        # Method 5: Parse HTML in summary
+        if hasattr(entry, 'summary'):
+            soup = BeautifulSoup(entry.summary, 'html.parser')
+            imgs = soup.find_all('img')
+            for img in imgs:
+                # Avoid small icons and tracking pixels by checking src and dimensions
+                if img.get('src'):
+                    # Skip probable logos/icons
+                    if not (img.get('width') and int(img['width']) < 50) and not \
+                       (img.get('height') and int(img['height']) < 50):
+                        # Make sure we're not grabbing an icon or tiny image
+                        if not any(word in img['src'].lower() for word in ['icon', 'logo', 'avatar', 'button', 'pixel', 'tracking']):
+                            return img['src']
+        
+        # Method 6: Fetch the full article to look for images (optimized for performance)
+        try:
+            # Only attempt this for entries where we couldn't find images
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            }
+            response = requests.get(entry.link, headers=headers, timeout=3)  # 3-second timeout to not slow down the app
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                
+                # First look for Open Graph image meta tag (most accurate for article image)
+                og_image = soup.find('meta', property='og:image')
+                if og_image and og_image.get('content'):
+                    return og_image['content']
+                
+                # Then look for Twitter image card
+                twitter_image = soup.find('meta', attrs={'name': 'twitter:image'})
+                if twitter_image and twitter_image.get('content'):
+                    return twitter_image['content']
+                
+                # Finally look for article-specific images
+                article_tag = soup.find('article') or soup.find('main') or soup
+                imgs = article_tag.find_all('img')
+                for img in imgs:
+                    if img.get('src') and not any(word in img['src'].lower() for word in ['icon', 'logo', 'avatar', 'button', 'pixel', 'tracking']):
+                        if img.get('width') and int(img['width']) >= 200 or img.get('height') and int(img['height']) >= 200:
+                            # Found a reasonably sized image
+                            src = img['src']
+                            # Fix relative URLs
+                            if src.startswith('//'):
+                                src = 'https:' + src
+                            elif src.startswith('/'):
+                                # Extract domain from entry link
+                                from urllib.parse import urlparse
+                                domain = '{uri.scheme}://{uri.netloc}'.format(uri=urlparse(entry.link))
+                                src = domain + src
+                            return src
+        except Exception as e:
+            logger.info(f"Couldn't extract image from article content: {e}")
+        
+        # If all else fails, fallback to random image
+        fallback = random.choice(FALLBACK_IMAGES)
+        logger.info(f"Using fallback image for {entry.get('title', 'Unknown title')}: {fallback}")
+        return fallback
+    except Exception as e:
+        logger.error(f"Error extracting image: {e}")
         return random.choice(FALLBACK_IMAGES)
     
     # Check summary/description

@@ -9,18 +9,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <!-- Top Banner with all promotional links -->
+    <div class="top-banner">
+        <div class="banner-content">
+            <p>Check out Tom's ForesightRadio podcast on AI</p>
+            <div class="banner-buttons">
+                <a href="https://foresightradio.com" target="_blank" class="banner-button">Visit ForesightRadio</a>
+                <button id="site-info-button" class="banner-button site-info-banner-btn">How this site was created</button>
+            </div>
+        </div>
+    </div>
     <header>
         <div class="container">
             <div class="logo">
                 <h1>NexusAI</h1>
             </div>
-            <nav>
-                <ul>
-                    <li><a href="#" class="active">Home</a></li>
-                    <li><a href="#">Latest</a></li>
-                    <li><a href="#">Topics</a></li>
-                    <li><a href="#">About</a></li>
-                </ul>
+            <nav class="digital-twin-nav">
+                <div class="ask-tom">
+                    <span>Have questions about AI? Ask Tom's digital twin.</span>
+                    <a href="https://tkspeaks.com/831-2/" target="_blank" class="ask-tom-button">Ask Tom</a>
+                </div>
             </nav>
             <div class="theme-toggle">
                 <button id="theme-toggle-btn">
@@ -89,6 +97,27 @@
         </div>
     </div>
     
+    <!-- How this site was created Popup -->
+    <div id="site-info-popup" class="popup-container">
+        <div class="popup-content site-info-content">
+            <span class="close-popup">&times;</span>
+            <h3>How This Site Was Created</h3>
+            <div class="site-info-details">
+                <p><strong>This site was created entirely by using Windsurf and a simple human dialog that required no coding on the part of the creator (that's me TK!). Every module used and listed below was created with the AI developer agent guiding me through every step of the process. Honestly, a slightly smarter than average 10-year-old could have done it!</strong></p>
+                
+                <p><strong>NexusAI</strong> is an AI news aggregation site built with modern web technologies:</p>
+                <ul>
+                    <li><strong>Backend:</strong> Python Flask server that fetches and parses RSS feeds from top AI news sources</li>
+                    <li><strong>Frontend:</strong> Responsive HTML/CSS/JavaScript with dynamic content loading</li>
+                    <li><strong>Data Sources:</strong> TechCrunch, VentureBeat, and Wired AI RSS feeds</li>
+                    <li><strong>Features:</strong> Dark/light mode, responsive design, newsletter integration</li>
+                    <li><strong>Deployment:</strong> Hosted on Render.com for seamless cloud deployment</li>
+                </ul>
+                <p>This project demonstrates how modern AI news aggregation can be implemented with clean, accessible design and dynamic content updates.</p>
+            </div>
+        </div>
+    </div>
+    
     <script src="script.js"></script>
     
     <!-- Begin Constant Contact Active Forms -->
@@ -107,12 +136,29 @@
                 }
             }, 5000);
             
-            // Close popup
-            const closeBtn = document.querySelector('.close-popup');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', function() {
+            // Subscribe popup close button
+            const closeSubscribeBtn = document.querySelector('#subscribe-popup .close-popup');
+            if (closeSubscribeBtn) {
+                closeSubscribeBtn.addEventListener('click', function() {
                     document.getElementById('subscribe-popup').style.display = 'none';
                     localStorage.setItem('popupShown', 'true');
+                });
+            }
+            
+            // Site info button functionality
+            const siteInfoBtn = document.getElementById('site-info-button');
+            const siteInfoPopup = document.getElementById('site-info-popup');
+            const closeSiteInfoBtn = document.querySelector('#site-info-popup .close-popup');
+            
+            if (siteInfoBtn) {
+                siteInfoBtn.addEventListener('click', function() {
+                    siteInfoPopup.style.display = 'flex';
+                });
+            }
+            
+            if (closeSiteInfoBtn) {
+                closeSiteInfoBtn.addEventListener('click', function() {
+                    siteInfoPopup.style.display = 'none';
                 });
             }
         });
