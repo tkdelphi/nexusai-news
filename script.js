@@ -343,8 +343,16 @@ function initDownloadSummary() {
             downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
             downloadBtn.disabled = true;
             
-            // Simple approach: Just open the URL directly
-            window.open('/test', '_blank');
+            // Create a direct link to the summary endpoint
+            const summaryUrl = `${API_CONFIG.BASE_URL}/api/summary`;
+            
+            // Create a hidden link and click it to trigger the download
+            const link = document.createElement('a');
+            link.href = summaryUrl;
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
             
             // Reset button after a short delay
             setTimeout(() => {
