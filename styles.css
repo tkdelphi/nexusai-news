@@ -271,10 +271,12 @@ main {
     display: flex;
     align-items: center;
     margin-bottom: 15px;
-    height: 30px;
+    height: auto;
+    min-height: 24px;
 }
 
 .source-logo {
+    display: none !important; /* Hide source logos to fix artifacts */
     width: auto;
     height: 28px;
     max-width: 120px;
@@ -285,6 +287,8 @@ main {
 .source-name {
     font-size: 0.9rem;
     color: var(--text-secondary);
+    font-weight: 500;
+    padding: 2px 0;
 }
 
 .read-more {
@@ -309,9 +313,7 @@ main {
 
 .featured-section h2 {
     font-size: 1.8rem;
-    margin-bottom: 25px;
-    padding-bottom: 10px;
-    border-bottom: 2px solid var(--accent-color);
+    margin-bottom: 0;
     display: inline-block;
 }
 
@@ -379,6 +381,37 @@ footer {
 
 .footer-logo p {
     color: var(--text-secondary);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    border-bottom: 2px solid var(--accent-color);
+    padding-bottom: 10px;
+}
+
+.download-btn {
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.download-btn:hover {
+    background-color: #3367d6;
+}
+
+.download-btn i {
+    font-size: 1rem;
 }
 
 .footer-links h3, .footer-newsletter h3 {
@@ -503,6 +536,54 @@ footer {
     animation: slideIn 0.5s ease-in-out;
 }
 
+/* Forced Subscription Popup Styles */
+.popup-container.force-subscription {
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    bottom: auto;
+    right: auto;
+    background-color: rgba(0, 0, 0, 0.85);
+    border-radius: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1002; /* Higher than the content overlay */
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Content Overlay to block the page */
+.content-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.9);
+    z-index: 1001;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.content-overlay::after {
+    content: 'Please subscribe to continue reading';
+    font-size: 24px;
+    color: var(--text-primary);
+    font-weight: bold;
+}
+
+.content-overlay.hidden {
+    display: none;
+}
+
 @keyframes slideIn {
     from { transform: translateY(100px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
@@ -511,6 +592,57 @@ footer {
 .popup-content {
     padding: 25px;
     position: relative;
+}
+
+/* Forced subscription popup content styles */
+.force-subscription .popup-content {
+    background-color: var(--card-bg);
+    padding: 40px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+    box-shadow: var(--card-shadow);
+}
+
+/* Direct subscription form styles */
+.direct-form {
+    margin-top: 20px;
+}
+
+#subscription-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 0 auto;
+    max-width: 100%;
+}
+
+#subscriber-email {
+    padding: 12px 15px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    font-size: 16px;
+    width: 100%;
+}
+
+#subscription-form button {
+    padding: 12px 15px;
+    background-color: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 16px;
+    transition: all 0.3s ease;
+}
+
+#subscription-form button:hover {
+    background-color: #3367d6;
+    transform: translateY(-2px);
 }
 
 .close-popup {
@@ -595,6 +727,8 @@ footer {
     font-weight: 500;
     text-align: center;
     padding: 10px 0;
+    margin-top: 15px;
+    font-size: 16px;
 }
 
 /* Newsletter Form Improvements */
@@ -620,4 +754,45 @@ footer {
     border-radius: 4px;
     cursor: pointer;
     font-weight: 500;
+}
+/* Add these CSS rules to the very end of your styles.css file */
+
+/* Radical approach to hide any element that contains just TechCrunch text */
+body *:not(.source-name):not(h2):not(h3) {
+    position: relative;
+}
+
+/* Hide any element that contains TechCrunch text without specific classes */
+body *:not(.source-name):not(h2):not(h3):contains('TechCrunch') {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Hide image elements with TechCrunch in alt that are not properly contained */
+img[alt*="TechCrunch"]:not(.source-logo) {
+    display: none !important;
+}
+
+/* Specifically fix the article page */
+.article-grid img[alt*="TechCrunch"],
+.article-grid img[alt*="VentureBeat"],
+.article-grid img[alt*="Wired"] {
+    display: none !important;
+}
+
+/* Add spacing to ensure layout doesn't break when those elements are hidden */
+.article-card {
+    min-height: 400px;
+}
+
+/* Alternatively, you could try using the before pseudoelement to add extra spacing */
+.article-card:before {
+    content: '';
+    display: block;
+    height: 1px;
+    margin-bottom: 10px;
 }

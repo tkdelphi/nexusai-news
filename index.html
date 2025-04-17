@@ -1,4 +1,81 @@
-<!DOCTYPE html>
+<!-- Replace the entire direct article loader script in index.html with this version -->
+<script>
+// Direct article loading as a backup
+window.addEventListener('load', function() {
+    // Check if articles have been loaded after 3 seconds
+    setTimeout(function() {
+        const heroArticle = document.getElementById('hero-article');
+        const featuredArticles = document.getElementById('featured-articles');
+        
+        // If still showing loading state, try to load directly
+        if (heroArticle.innerHTML.includes('Loading headline article...') ||
+            featuredArticles.innerHTML.includes('Loading articles...')) {
+            
+            console.log('Articles not loaded after timeout, trying direct fetch...');
+            
+            // Determine API base URL dynamically
+            const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'http://localhost:5001'
+                : ''; // Empty string means same domain for production
+            
+            console.log('Using API base URL:', apiBaseUrl);
+            
+            // Direct fetch for hero
+            fetch(`${apiBaseUrl}/api/hero`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.article) {
+                        renderHeroArticleDirect(data.article);
+                    }
+                })
+                .catch(err => console.error('Direct hero fetch failed:', err));
+            
+            // Direct fetch for articles
+            fetch(`${apiBaseUrl}/api/articles?limit=12`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.articles && data.articles.length > 0) {
+                        renderArticlesDirect(data.articles);
+                    }
+                })
+                .catch(err => console.error('Direct articles fetch failed:', err));
+        }
+    }, 3000); // Wait 3 seconds
+});
+
+// Direct render functions - FIXED VERSION WITHOUT LOGO IMAGES
+function renderHeroArticleDirect(article) {
+    const heroArticleElement = document.getElementById('hero-article');
+    
+    heroArticleElement.innerHTML = `
+        <img src="${article.image}" alt="${article.title}">
+        <div class="hero-article-content">
+            <div class="source-info">
+                <span class="source-name">${article.source.name}</span>
+            </div>
+            <h2>${article.title}</h2>
+            <a href="${article.link}" class="read-more" target="_blank">Read Full Article</a>
+        </div>
+    `;
+}
+
+function renderArticlesDirect(articles) {
+    const featuredArticlesElement = document.getElementById('featured-articles');
+    
+    featuredArticlesElement.innerHTML = articles.map(article => `
+        <div class="article-card">
+            <img src="${article.image}" alt="${article.title}">
+            <div class="article-card-content">
+                <div class="source-info">
+                    <span class="source-name">${article.source.name}</span>
+                </div>
+                <h3>${article.title}</h3>
+                <a href="${article.link}" class="read-more" target="_blank">Read Full Article</a>
+            </div>
+        </div>
+    `).join('');
+}
+</script><!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
@@ -7,8 +84,11 @@
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="fix.css">
 </head>
 <body>
+    <h1 style="color:red; background:yellow; padding:20px; text-align:center;">TEST UPDATE - VERIFY DEPLOYMENT WORKING</h1>
     <!-- Top Banner with all promotional links -->
     <div class="top-banner">
         <div class="banner-content">
@@ -48,7 +128,12 @@
         </section>
 
         <section class="featured-section container">
-            <h2>Latest AI News</h2>
+            <div class="section-header">
+                <h2>Latest AI News</h2>
+                <button id="download-summary-btn" class="download-btn">
+                    <i class="fas fa-download"></i> Download News Summary
+                </button>
+            </div>
             <div id="featured-articles" class="article-grid">
                 <!-- Featured articles will be loaded here -->
                 <div class="loading">Loading articles...</div>
@@ -87,15 +172,28 @@
         </div>
     </footer>
 
-    <!-- Constant Contact Popup -->
-    <div id="subscribe-popup" class="popup-container">
+    <!-- Forced Subscription Popup -->
+    <div id="subscribe-popup" class="popup-container force-subscription">
         <div class="popup-content">
-            <span class="close-popup">&times;</span>
             <h3>Stay Updated with AI News</h3>
-            <p>Get the latest AI news and insights delivered to your inbox weekly.</p>
+            <p>To continue reading NexusAI, please subscribe to our newsletter.</p>
+            <!-- Constant Contact Form (may not load) -->
             <div class="ctct-inline-form" data-form-id="popup-form"></div>
+            
+            <!-- Direct Subscription Form (fallback) -->
+            <div id="direct-subscription-form" class="direct-form">
+                <form id="subscription-form">
+                    <input type="email" id="subscriber-email" placeholder="Your email address" required>
+                    <button type="submit">Subscribe Now</button>
+                </form>
+            </div>
+            
+            <div class="subscription-message"></div>
         </div>
     </div>
+    
+    <!-- Overlay to block content until subscribed -->
+    <div id="content-overlay" class="content-overlay hidden"></div>
     
     <!-- How this site was created Popup -->
     <div id="site-info-popup" class="popup-container">
@@ -128,22 +226,106 @@
     <!-- Popup functionality -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Show popup after 5 seconds
+            // Show forced subscription popup after 60 seconds
             setTimeout(function() {
                 const popup = document.getElementById('subscribe-popup');
-                if (popup && !localStorage.getItem('popupShown')) {
+                const overlay = document.getElementById('content-overlay');
+                
+                if (popup && !localStorage.getItem('subscribed')) {
                     popup.style.display = 'flex';
+                    overlay.classList.remove('hidden');
+                    
+                    // Disable scrolling when popup appears
+                    document.body.style.overflow = 'hidden';
                 }
-            }, 5000);
+            }, 60000); // 60 seconds
             
-            // Subscribe popup close button
-            const closeSubscribeBtn = document.querySelector('#subscribe-popup .close-popup');
-            if (closeSubscribeBtn) {
-                closeSubscribeBtn.addEventListener('click', function() {
-                    document.getElementById('subscribe-popup').style.display = 'none';
-                    localStorage.setItem('popupShown', 'true');
+            // Set up direct subscription form
+            const subscriptionForm = document.getElementById('subscription-form');
+            if (subscriptionForm) {
+                subscriptionForm.addEventListener('submit', function(event) {
+                    event.preventDefault();
+                    
+                    // Get the email
+                    const email = document.getElementById('subscriber-email').value;
+                    if (!email) return;
+                    
+                    // Show loading state
+                    document.querySelector('.subscription-message').innerHTML = '<p>Processing your subscription...</p>';
+                    
+                    // Send the email to our API endpoint
+                    fetch('/api/subscribe', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ email: email })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        console.log('Subscription response:', data);
+                        
+                        // Mark as subscribed regardless of API response
+                        // This ensures users can continue even if API fails
+                        localStorage.setItem('subscribed', 'true');
+                        
+                        // Display success message
+                        document.querySelector('.subscription-message').innerHTML = 
+                            '<p class="success-message">Thank you for subscribing! Enjoy NexusAI.</p>';
+                        
+                        // Allow user to continue after 2 seconds
+                        setTimeout(function() {
+                            document.getElementById('subscribe-popup').style.display = 'none';
+                            document.getElementById('content-overlay').classList.add('hidden');
+                            document.body.style.overflow = 'auto'; // Re-enable scrolling
+                        }, 2000);
+                    })
+                    .catch(error => {
+                        console.error('Subscription error:', error);
+                        // Still mark as subscribed so user can continue
+                        localStorage.setItem('subscribed', 'true');
+                        
+                        // Display success message anyway
+                        document.querySelector('.subscription-message').innerHTML = 
+                            '<p class="success-message">Thank you for subscribing! Enjoy NexusAI.</p>';
+                        
+                        // Allow user to continue after 2 seconds
+                        setTimeout(function() {
+                            document.getElementById('subscribe-popup').style.display = 'none';
+                            document.getElementById('content-overlay').classList.add('hidden');
+                            document.body.style.overflow = 'auto'; // Re-enable scrolling
+                        }, 2000);
+                    });
                 });
             }
+            
+            // Set up Constant Contact event listener for subscription completion
+            window.addEventListener('message', function(event) {
+                // Check if the message is from Constant Contact
+                if (event.data && typeof event.data === 'string') {
+                    try {
+                        const data = JSON.parse(event.data);
+                        
+                        // Detect successful form submission
+                        if (data.type === 'form:submit:success') {
+                            // Mark as subscribed
+                            localStorage.setItem('subscribed', 'true');
+                            
+                            // Display success message
+                            document.querySelector('.subscription-message').innerHTML = '<p class="success-message">Thank you for subscribing! Enjoy NexusAI.</p>';
+                            
+                            // Allow user to continue after 2 seconds
+                            setTimeout(function() {
+                                document.getElementById('subscribe-popup').style.display = 'none';
+                                document.getElementById('content-overlay').classList.add('hidden');
+                                document.body.style.overflow = 'auto'; // Re-enable scrolling
+                            }, 2000);
+                        }
+                    } catch (e) {
+                        // Not JSON or other error, ignore
+                    }
+                }
+            });
             
             // Site info button functionality
             const siteInfoBtn = document.getElementById('site-info-button');
@@ -164,84 +346,177 @@
         });
     </script>
     <!-- Direct article loader script -->
-    <script>
-    // Direct article loading as a backup
-    window.addEventListener('load', function() {
-        // Check if articles have been loaded after 3 seconds
-        setTimeout(function() {
-            const heroArticle = document.getElementById('hero-article');
-            const featuredArticles = document.getElementById('featured-articles');
-            
-            // If still showing loading state, try to load directly
-            if (heroArticle.innerHTML.includes('Loading headline article...') ||
-                featuredArticles.innerHTML.includes('Loading articles...')) {
-                
-                console.log('Articles not loaded after timeout, trying direct fetch...');
-                
-                // Determine API base URL dynamically
-                const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                    ? 'http://localhost:5001'
-                    : ''; // Empty string means same domain for production
-                
-                console.log('Using API base URL:', apiBaseUrl);
-                
-                // Direct fetch for hero
-                fetch(`${apiBaseUrl}/api/hero`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.article) {
-                            renderHeroArticleDirect(data.article);
-                        }
-                    })
-                    .catch(err => console.error('Direct hero fetch failed:', err));
-                
-                // Direct fetch for articles
-                fetch(`${apiBaseUrl}/api/articles?limit=12`)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.articles && data.articles.length > 0) {
-                            renderArticlesDirect(data.articles);
-                        }
-                    })
-                    .catch(err => console.error('Direct articles fetch failed:', err));
-            }
-        }, 3000); // Wait 3 seconds
-    });
-    
-    // Direct render functions
-    function renderHeroArticleDirect(article) {
-        const heroArticleElement = document.getElementById('hero-article');
+    <!-- Replace the entire direct article loader script in index.html with this version -->
+<script>
+// Direct article loading as a backup
+window.addEventListener('load', function() {
+    // Check if articles have been loaded after 3 seconds
+    setTimeout(function() {
+        const heroArticle = document.getElementById('hero-article');
+        const featuredArticles = document.getElementById('featured-articles');
         
-        heroArticleElement.innerHTML = `
+        // If still showing loading state, try to load directly
+        if (heroArticle.innerHTML.includes('Loading headline article...') ||
+            featuredArticles.innerHTML.includes('Loading articles...')) {
+            
+            console.log('Articles not loaded after timeout, trying direct fetch...');
+            
+            // Determine API base URL dynamically
+            const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+                ? 'http://localhost:5001'
+                : ''; // Empty string means same domain for production
+            
+            console.log('Using API base URL:', apiBaseUrl);
+            
+            // Direct fetch for hero
+            fetch(`${apiBaseUrl}/api/hero`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.article) {
+                        renderHeroArticleDirect(data.article);
+                    }
+                })
+                .catch(err => console.error('Direct hero fetch failed:', err));
+            
+            // Direct fetch for articles
+            fetch(`${apiBaseUrl}/api/articles?limit=12`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.articles && data.articles.length > 0) {
+                        renderArticlesDirect(data.articles);
+                    }
+                })
+                .catch(err => console.error('Direct articles fetch failed:', err));
+        }
+    }, 3000); // Wait 3 seconds
+});
+
+// Direct render functions - FIXED VERSION WITHOUT LOGO IMAGES
+function renderHeroArticleDirect(article) {
+    const heroArticleElement = document.getElementById('hero-article');
+    
+    heroArticleElement.innerHTML = `
+        <img src="${article.image}" alt="${article.title}">
+        <div class="hero-article-content">
+            <div class="source-info">
+                <span class="source-name">${article.source.name}</span>
+            </div>
+            <h2>${article.title}</h2>
+            <a href="${article.link}" class="read-more" target="_blank">Read Full Article</a>
+        </div>
+    `;
+}
+
+function renderArticlesDirect(articles) {
+    const featuredArticlesElement = document.getElementById('featured-articles');
+    
+    featuredArticlesElement.innerHTML = articles.map(article => `
+        <div class="article-card">
             <img src="${article.image}" alt="${article.title}">
-            <div class="hero-article-content">
+            <div class="article-card-content">
                 <div class="source-info">
-                    <img src="${article.source.logo}" alt="${article.source.name}" class="source-logo">
                     <span class="source-name">${article.source.name}</span>
                 </div>
-                <h2>${article.title}</h2>
+                <h3>${article.title}</h3>
                 <a href="${article.link}" class="read-more" target="_blank">Read Full Article</a>
             </div>
-        `;
+        </div>
+    `).join('');
+}
+</script>
+    <!-- Add this script at the bottom of index.html, right before the closing </body> tag -->
+<script>
+// Extreme cleanup script - add to bottom of index.html
+(function() {
+    // Function to aggressively remove all standalone TechCrunch text nodes
+    function removeArtifacts() {
+        console.log("Running aggressive artifact cleanup");
+        
+        // 1. Directly target any small text node containing TechCrunch
+        document.querySelectorAll('*').forEach(el => {
+            // Skip elements that are supposed to contain the text
+            if (el.classList.contains('source-name') || 
+                el.tagName === 'H3' || 
+                el.tagName === 'H2') {
+                return;
+            }
+            
+            // Check if this element *only* contains TechCrunch or VentureBeat text
+            if (el.childNodes.length === 1 && 
+                el.childNodes[0].nodeType === Node.TEXT_NODE) {
+                const text = el.childNodes[0].textContent.trim();
+                if (text === 'TechCrunch' || text === 'VentureBeat' || text === 'Wired') {
+                    console.log("Removing artifact text element:", el);
+                    el.style.display = 'none';
+                    el.innerHTML = '';
+                }
+            }
+        });
+        
+        // 2. Find any image with techcrunch in alt and remove if not in proper container
+        document.querySelectorAll('img').forEach(img => {
+            if ((img.alt && img.alt.toLowerCase().includes('techcrunch')) || 
+                (img.src && img.src.toLowerCase().includes('techcrunch'))) {
+                
+                // Check if this image is outside a proper article card
+                let isInsideCard = false;
+                let parent = img.parentElement;
+                
+                while (parent && parent !== document.body) {
+                    if (parent.classList.contains('article-card') || 
+                        parent.classList.contains('hero-article') ||
+                        parent.classList.contains('source-info')) {
+                        isInsideCard = true;
+                        break;
+                    }
+                    parent = parent.parentElement;
+                }
+                
+                // Remove if outside a proper card
+                if (!isInsideCard) {
+                    console.log("Removing artifact image:", img);
+                    img.remove();
+                }
+            }
+        });
+        
+        // 3. Find single-letter orphan text nodes (like leftover parts)
+        document.querySelectorAll('*').forEach(el => {
+            if (el.childNodes.length === 1 && 
+                el.childNodes[0].nodeType === Node.TEXT_NODE &&
+                el.childNodes[0].textContent.trim().length <= 2) {
+                el.innerHTML = '';
+            }
+        });
     }
     
-    function renderArticlesDirect(articles) {
-        const featuredArticlesElement = document.getElementById('featured-articles');
-        
-        featuredArticlesElement.innerHTML = articles.map(article => `
-            <div class="article-card">
-                <img src="${article.image}" alt="${article.title}">
-                <div class="article-card-content">
-                    <div class="source-info">
-                        <img src="${article.source.logo}" alt="${article.source.name}" class="source-logo">
-                        <span class="source-name">${article.source.name}</span>
-                    </div>
-                    <h3>${article.title}</h3>
-                    <a href="${article.link}" class="read-more" target="_blank">Read Full Article</a>
-                </div>
-            </div>
-        `).join('');
-    }
-    </script>
+    // Run the cleanup immediately and repeatedly
+    removeArtifacts();
+    
+    // Run several times to catch any that appear after initial load
+    setTimeout(removeArtifacts, 500);
+    setTimeout(removeArtifacts, 1000);
+    setTimeout(removeArtifacts, 2000);
+    
+    // Also set up a MutationObserver to watch for changes and clean up as needed
+    const observer = new MutationObserver(function() {
+        removeArtifacts();
+    });
+    
+    // Observe the entire document for changes
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true
+    });
+    
+    // Also run the cleanup after any image loads
+    document.addEventListener('load', function(event) {
+        if (event.target.tagName === 'IMG') {
+            setTimeout(removeArtifacts, 100);
+        }
+    }, true);
+})();
+</script>
 </body>
 </html>

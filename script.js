@@ -4,6 +4,12 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Fetch and render articles from API
     fetchArticlesFromAPI();
+    
+    // Setup cleanup (extra protection)
+    setupArtifactCleanup();
+    
+    // Initialize download summary button
+    initDownloadSummary();
 });
 
 // Theme toggle functionality
@@ -194,40 +200,113 @@ async function fetchArticlesFromAPI() {
     }
 }
 
-// Render the hero article
+// SOLUTION 2: Complete rewrite of rendering functions using DOM manipulation
+
+// Render the hero article with DOM manipulation to prevent unwanted elements
 function renderHeroArticle(article) {
     const heroArticleElement = document.getElementById('hero-article');
     
-    heroArticleElement.innerHTML = `
-        <img src="${article.image}" alt="${article.title}">
-        <div class="hero-article-content">
-            <div class="source-info">
-                <img src="${article.source.logo}" alt="${article.source.name}" class="source-logo">
-                <span class="source-name">${article.source.name}</span>
-            </div>
-            <h2>${article.title}</h2>
-            <a href="${article.link}" class="read-more" target="_blank">Read Full Article</a>
-        </div>
-    `;
+    // Clear previous content
+    heroArticleElement.innerHTML = '';
+    
+    // Create image
+    const img = document.createElement('img');
+    img.src = article.image;
+    img.alt = article.title;
+    heroArticleElement.appendChild(img);
+    
+    // Create content container
+    const content = document.createElement('div');
+    content.className = 'hero-article-content';
+    
+    // Create source info with only name, no logo
+    const sourceInfo = document.createElement('div');
+    sourceInfo.className = 'source-info';
+    
+    const sourceName = document.createElement('span');
+    sourceName.className = 'source-name';
+    sourceName.textContent = article.source.name;
+    sourceInfo.appendChild(sourceName);
+    
+    // Create title
+    const title = document.createElement('h2');
+    title.textContent = article.title;
+    
+    // Create link
+    const link = document.createElement('a');
+    link.className = 'read-more';
+    link.href = article.link;
+    link.target = '_blank';
+    link.textContent = 'Read Full Article';
+    
+    // Append all elements
+    content.appendChild(sourceInfo);
+    content.appendChild(title);
+    content.appendChild(link);
+    heroArticleElement.appendChild(content);
 }
 
-// Render the featured articles
+// Render the featured articles with DOM manipulation to prevent unwanted elements
 function renderFeaturedArticles(articles) {
     const featuredArticlesElement = document.getElementById('featured-articles');
     
-    featuredArticlesElement.innerHTML = articles.map(article => `
-        <div class="article-card">
-            <img src="${article.image}" alt="${article.title}">
-            <div class="article-card-content">
-                <div class="source-info">
-                    <img src="${article.source.logo}" alt="${article.source.name}" class="source-logo">
-                    <span class="source-name">${article.source.name}</span>
-                </div>
-                <h3>${article.title}</h3>
-                <a href="${article.link}" class="read-more" target="_blank">Read Full Article</a>
-            </div>
-        </div>
-    `).join('');
+    // Clear the container first
+    featuredArticlesElement.innerHTML = '';
+    
+    // Create each article card with DOM methods instead of innerHTML
+    articles.forEach(article => {
+        // Create article card
+        const card = document.createElement('div');
+        card.className = 'article-card';
+        
+        // Create image
+        const img = document.createElement('img');
+        img.src = article.image;
+        img.alt = article.title;
+        card.appendChild(img);
+        
+        // Create content container
+        const content = document.createElement('div');
+        content.className = 'article-card-content';
+        
+        // Create source info with only name, no logo
+        const sourceInfo = document.createElement('div');
+        sourceInfo.className = 'source-info';
+        
+        const sourceName = document.createElement('span');
+        sourceName.className = 'source-name';
+        sourceName.textContent = article.source.name;
+        sourceInfo.appendChild(sourceName);
+        
+        // Create title
+        const title = document.createElement('h3');
+        title.textContent = article.title;
+        
+        // Create link
+        const link = document.createElement('a');
+        link.className = 'read-more';
+        link.href = article.link;
+        link.target = '_blank';
+        link.textContent = 'Read Full Article';
+        
+        // Append all elements
+        content.appendChild(sourceInfo);
+        content.appendChild(title);
+        content.appendChild(link);
+        card.appendChild(content);
+        
+        // Add to container
+        featuredArticlesElement.appendChild(card);
+    });
+}
+
+// Direct render functions just call the main render functions
+function renderHeroArticleDirect(article) {
+    renderHeroArticle(article);
+}
+
+function renderArticlesDirect(articles) {
+    renderFeaturedArticles(articles);
 }
 
 // Add a function to periodically refresh articles
@@ -248,5 +327,119 @@ document.addEventListener('keydown', (event) => {
     if (event.key === 'F5' || (event.ctrlKey && event.key === 'r')) {
         event.preventDefault();
         fetchArticlesFromAPI();
+        console.log('Manual refresh triggered');
     }
 });
+
+// Initialize the download summary functionality
+function initDownloadSummary() {
+    const downloadBtn = document.getElementById('download-summary-btn');
+    
+    if (downloadBtn) {
+        // Make the button a direct link instead of using JavaScript
+        downloadBtn.addEventListener('click', (event) => {
+            // Show loading state
+            const originalText = downloadBtn.innerHTML;
+            downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            downloadBtn.disabled = true;
+            
+            // Simple approach: Just open the URL directly
+            window.open('/test', '_blank');
+            
+            // Reset button after a short delay
+            setTimeout(() => {
+                downloadBtn.innerHTML = originalText;
+                downloadBtn.disabled = false;
+            }, 1500);
+        });
+        
+        // Also add a simple console message to confirm the function is running
+        console.log('Download button initialized!');
+    } else {
+        console.error('Download button not found in the DOM!');
+    }
+}
+
+// Extra protection: setup artifact cleanup as well
+function setupArtifactCleanup() {
+    // Function to remove all TechCrunch text nodes and images
+    function removeTechCrunchArtifacts() {
+        console.log("Running TechCrunch artifact cleanup...");
+        
+        try {
+            // Find all TechCrunch images and remove them
+            document.querySelectorAll('img[alt="TechCrunch"]').forEach(img => {
+                img.remove();
+            });
+            
+            // Remove any element that just contains TechCrunch
+            const walker = document.createTreeWalker(
+                document.body, 
+                NodeFilter.SHOW_ELEMENT, 
+                null, 
+                false
+            );
+            
+            let element;
+            let elementsToRemove = [];
+            
+            while (element = walker.nextNode()) {
+                if (element.childNodes.length === 1 && 
+                    element.childNodes[0].nodeType === Node.TEXT_NODE && 
+                    element.childNodes[0].textContent === 'TechCrunch' &&
+                    !element.classList.contains('source-name')) {
+                    elementsToRemove.push(element);
+                }
+            }
+            
+            // Remove identified elements
+            elementsToRemove.forEach(el => el.remove());
+            
+            // Additional aggressive cleanup - find any text node containing just TechCrunch
+            const textWalker = document.createTreeWalker(
+                document.body, 
+                NodeFilter.SHOW_TEXT, 
+                null, 
+                false
+            );
+            
+            let textNode;
+            let textNodesToModify = [];
+            
+            while (textNode = textWalker.nextNode()) {
+                if (textNode.textContent.trim() === 'TechCrunch' &&
+                    textNode.parentElement &&
+                    !textNode.parentElement.classList.contains('source-name')) {
+                    textNodesToModify.push(textNode);
+                }
+            }
+            
+            // Remove or modify text nodes
+            textNodesToModify.forEach(node => {
+                node.textContent = '';
+            });
+        } catch (error) {
+            console.error("Error in cleanup script:", error);
+        }
+    }
+    
+    // Run the cleanup on page load
+    removeTechCrunchArtifacts();
+    
+    // Run cleanup multiple times to catch any late-loading artifacts
+    setTimeout(removeTechCrunchArtifacts, 500);
+    setTimeout(removeTechCrunchArtifacts, 1000);
+    setTimeout(removeTechCrunchArtifacts, 2000);
+    
+    // Set up an observer to monitor DOM changes and remove artifacts
+    const observer = new MutationObserver(() => {
+        removeTechCrunchArtifacts();
+    });
+    
+    // Start observing the document body
+    observer.observe(document.body, { 
+        childList: true, 
+        subtree: true,
+        characterData: true
+    });
+}

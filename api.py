@@ -5,7 +5,7 @@ AI News API - Fetches news from RSS feeds and serves them via a Flask API
 import feedparser
 import requests
 from bs4 import BeautifulSoup
-from flask import Flask, jsonify, send_file, request
+from flask import Flask, jsonify, request, send_from_directory, make_response
 from flask_cors import CORS
 from datetime import datetime
 import random
@@ -61,8 +61,11 @@ FALLBACK_IMAGES = [
 ]
 
 # Cache for articles to reduce repeated parsing
-CACHED_ARTICLES = []
-LAST_UPDATED = None
+# Initialize the articles cache with empty values
+articles_cache = {
+    'articles': [],
+    'last_updated': None
+}
 CACHE_TIMEOUT = 3600  # 1 hour in seconds
 
 def parse_rss_feeds():
@@ -83,7 +86,7 @@ def parse_rss_feeds():
                     'summary': _extract_summary(entry),
                     'link': entry.get('link', ''),
                     'published': entry.get('published', datetime.now().isoformat()),
-                    'image': _extract_image(entry),
+                    'image': get_article_image(entry),
                     'source': {
                         'name': feed_source['name'],
                         'url': feed_source['website'],
@@ -108,35 +111,115 @@ def parse_rss_feeds():
 
 def _extract_summary(entry):
     """Extract and clean up article summary"""
-    # Try different fields that might contain the summary
-    if 'summary' in entry:
-        text = entry.summary
-    elif 'description' in entry:
-        text = entry.description
-    else:
-        return "No summary available"
+    summary = ""
     
-    # Clean up HTML
-    try:
-        soup = BeautifulSoup(text, 'html.parser')
-        # Remove script and style elements
-        for tag in soup(['script', 'style']):
-            tag.decompose()
+    # Try to get summary from different feed formats
+    if hasattr(entry, 'summary'):
+        summary = entry.summary
+    elif hasattr(entry, 'description'):
+        summary = entry.description
+    
+    # Clean up HTML from summary
+    if summary:
+        soup = BeautifulSoup(summary, 'html.parser')
+        summary = soup.get_text().strip()
         
-        # Get text and clean it up
-        text = soup.get_text().strip()
-        # Normalize whitespace
-        text = ' '.join(text.split())
+        # Limit summary length
+        if len(summary) > 200:
+            summary = summary[:197] + "..."
+    else:
+        summary = "Click to read the full article."
         
-        # Limit length
-        if len(text) > 200:
-            text = text[:197] + '...'
-        
-        return text
-    except:
-        return "Summary extraction failed"
+    return summary
 
-def _extract_image(entry):
+def extract_first_paragraph(html_content, max_words=50):
+    """Extract first paragraph from HTML content, limited to max_words"""
+    if not html_content:
+        return ""
+    
+    soup = BeautifulSoup(html_content, 'html.parser')
+    
+    # Remove any script or style elements
+    for script in soup(["script", "style"]):
+        script.extract()
+    
+    # Find the first paragraph
+    paragraph = soup.find('p')
+    if paragraph:
+        text = paragraph.get_text().strip()
+    else:
+        # If no paragraph, just get the text
+        text = soup.get_text().strip()
+    
+    # Clean up the text
+    text = clean_text(text)
+    
+    # Split into words and limit to max_words
+    words = text.split()
+    if len(words) > max_words:
+        text = ' '.join(words[:max_words]) + '...'
+    
+    return text
+
+def clean_text(text):
+    """Clean up text by removing unusual characters and fixing encoding issues"""
+    if not text:
+        return ""
+    
+    # Replace common HTML entities and Unicode characters
+    replacements = {
+        '&nbsp;': ' ',
+        '&amp;': '&',
+        '&lt;': '<',
+        '&gt;': '>',
+        '&quot;': '"',
+        '&apos;': "'",
+        '\u2019': "'",  # Right single quotation mark
+        '\u2018': "'",  # Left single quotation mark
+        '\u201c': '"',  # Left double quotation mark
+        '\u201d': '"',  # Right double quotation mark
+        '\u2014': '-',  # Em dash
+        '\u2013': '-',  # En dash
+        '\u00a0': ' ',  # Non-breaking space
+    }
+    
+    for old, new in replacements.items():
+        if old in text:
+            text = text.replace(old, new)
+    
+    # Normalize whitespace
+    import re
+    text = re.sub(r'\s+', ' ', text).strip()
+    
+    return text
+
+def is_ai_related(entry, keywords):
+    """Check if entry is related to AI based on keywords"""
+    try:
+        if not keywords:
+            # If no keywords provided, include all articles
+            return True
+            
+        # Convert all content to lowercase for case-insensitive matching
+        title = entry.title.lower() if hasattr(entry, 'title') else ''
+        summary = ''
+        
+        if hasattr(entry, 'summary'):
+            summary = entry.summary.lower()
+        elif hasattr(entry, 'description'):
+            summary = entry.description.lower()
+            
+        # Check if any keyword is in title or summary
+        for keyword in keywords:
+            if keyword.lower() in title or keyword.lower() in summary:
+                return True
+                
+        return False
+    except Exception as e:
+        logger.error(f"Error in is_ai_related: {str(e)}")
+        return False
+
+def get_article_image(entry):
     """Extract image URL from feed entry"""
     try:
         # Method 1: Check for media_thumbnail
@@ -252,16 +335,28 @@ def _extract_image(entry):
     
     return False
 
+# Define fallback images to use when no image is found
+FALLBACK_IMAGES = [
+    "https://images.unsplash.com/photo-1677442135046-c10d516d84c6?q=100&w=2000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?q=100&w=2000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?q=100&w=2000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?q=100&w=2000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?q=100&w=2000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1616469829581-73993eb86b02?q=100&w=2000&auto=format&fit=crop",
+    "https://images.unsplash.com/photo-1557838429-06a189a5cb26?q=100&w=2000&auto=format&fit=crop",
+]
+
 def fetch_article_from_source(source, max_articles=5):
     """Fetch and parse RSS feed from a given source"""
     try:
-        feed = feedparser.parse(source['rss_url'])
+        feed = feedparser.parse(source['url'])
         articles = []
         
         count = 0
         for entry in feed.entries:
             # Only process if AI-related or if this source has AI-specific feed
-            if 'ai' in source['rss_url'].lower() or is_ai_related(entry, source):
+            ai_keywords = ['ai', 'artificial intelligence', 'machine learning', 'deep learning', 'neural network', 'gpt', 'llm']
+            if 'ai' in source['url'].lower() or is_ai_related(entry, ai_keywords):
                 # Try to get the published date
                 published = entry.get('published_parsed')
                 if published:
@@ -280,21 +375,25 @@ def fetch_article_from_source(source, max_articles=5):
                 # Clean the title to remove any artifacts
                 title = clean_text(entry.title)
                 
-                # Get image URL
-                image_url = get_article_image(entry)
+                # Get image URL or use a fallback image
+                try:
+                    image_url = get_article_image(entry)
+                except Exception as e:
+                    logger.error(f"Error getting image: {str(e)}")
+                    image_url = random.choice(FALLBACK_IMAGES)
                 
                 # Create article object
                 article = {
                     'id': hash(entry.link) % 100000,  # Generate a simple hash as ID
-                    'title': clean_text(entry.title),  # Clean the title
+                    'title': entry.title,  # We'll clean the title directly in the code
                     'summary': summary,
                     'link': entry.link,
                     'published': published_date,
                     'image': image_url,
                     'source': {
                         'name': source['name'],
-                        'url': source['url'],
-                        'logo': source['logo']
+                        'website': source.get('website', ''),
+                        'logo': source.get('logo', '')
                     }
                 }
                 
@@ -313,7 +412,7 @@ def fetch_all_articles():
     """Fetch articles from all sources and update the cache"""
     all_articles = []
     
-    for source in NEWS_SOURCES:
+    for source in RSS_FEEDS:
         articles = fetch_article_from_source(source)
         all_articles.extend(articles)
     
@@ -328,7 +427,7 @@ def fetch_all_articles():
     articles_cache['articles'] = all_articles
     articles_cache['last_updated'] = datetime.now()
     
-    logger.info(f"Fetched {len(all_articles)} articles from {len(NEWS_SOURCES)} sources")
+    logger.info(f"Fetched {len(all_articles)} articles from {len(RSS_FEEDS)} sources")
     return all_articles
 
 def background_fetcher():
@@ -348,8 +447,71 @@ def index():
     """Serve the main page"""
     return app.send_static_file('index.html')
 
+@app.route('/test')
+def test_endpoint():
+    """Simple test endpoint that just returns text"""
+    return "Test endpoint working!"
+
+@app.route('/api/summary')
+def api_summary():
+    """Generate a text summary of all articles"""
+    try:
+        # Current date for the file
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        
+        # Create the text content
+        summary_text = f"NexusAI News Summary - {current_date}\n"
+        summary_text += "=" * 50 + "\n\n"
+        
+        # Use existing articles without refreshing cache to avoid errors
+        if articles_cache['articles']:
+            # Find a hero article (first article or one marked as hero)
+            hero_article = None
+            for article in articles_cache['articles']:
+                if article.get('isHero'):
+                    hero_article = article
+                    break
+            
+            # If no hero found, use the first article
+            if not hero_article and articles_cache['articles']:
+                hero_article = articles_cache['articles'][0]
+            
+            # Add hero article
+            if hero_article:
+                summary_text += f"HEADLINE: {hero_article['title']}\n"
+                summary_text += f"SOURCE: {hero_article['source']['name']}\n"
+                summary_text += f"LINK: {hero_article['link']}\n\n"
+            
+            # Add other articles
+            summary_text += "OTHER STORIES:\n" + "-" * 50 + "\n\n"
+            
+            for article in articles_cache['articles']:
+                # Skip the hero article if we found one
+                if hero_article and article == hero_article:
+                    continue
+                
+                summary_text += f"TITLE: {article['title']}\n"
+                summary_text += f"SOURCE: {article['source']['name']}\n"
+                summary_text += f"LINK: {article['link']}\n\n"
+        else:
+            summary_text += "No articles available at this time.\n\n"
+        
+        # Add footer
+        summary_text += "=" * 50 + "\n"
+        summary_text += f"Generated by NexusAI News Hub on {current_date}\n"
+        
+        # Set response headers to make it a downloadable file
+        response = make_response(summary_text)
+        response.headers["Content-Disposition"] = f"attachment; filename=nexusai_news_summary_{current_date}.txt"
+        response.headers["Content-Type"] = "text/plain"
+        
+        return response
+    except Exception as e:
+        logger.error(f"Error generating summary: {str(e)}")
+        return jsonify({"error": "An error occurred while generating the summary"}), 500
+
 @app.route('/api/articles')
-def get_articles():
+def api_articles():
     """API endpoint to get articles"""
     # Check if cache needs refreshing (older than 30 minutes or empty)
     if (articles_cache['last_updated'] is None or 
