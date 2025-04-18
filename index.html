@@ -424,11 +424,7 @@ function renderArticlesDirect(articles) {
 }
 </script>
     <!-- Add this script at the bottom of index.html, right before the closing </body> tag -->
-<script>
-// Extreme cleanup script - add to bottom of index.html
-(function() {
-    // Function to aggressively remove all standalone TechCrunch text nodes
-    function removeArtifacts() {
+<!-- Aggressive cleanup script removed to fix scrolling bug -->
         console.log("Running aggressive artifact cleanup");
         
         // 1. Directly target any small text node containing TechCrunch
@@ -515,7 +511,6 @@ function renderArticlesDirect(articles) {
             setTimeout(removeArtifacts, 100);
         }
     }, true);
-})();
-</script>
+
 </body>
 </html>
