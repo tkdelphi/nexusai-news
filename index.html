@@ -80,7 +80,7 @@ function renderArticlesDirect(articles) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusAI - Latest AI News & Insights</title>
+    <title>NexusAInews.com v3.0 - Latest AI News & Insights</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -101,7 +101,7 @@ function renderArticlesDirect(articles) {
     <header>
         <div class="container">
             <div class="logo">
-                <h1>NexusAI</h1>
+                <h1>NexusAInews.com <span style="font-size:0.7em; font-weight:normal; vertical-align:super; color:#888;">v3.0</span></h1>
             </div>
             <nav class="digital-twin-nav">
                 <div class="ask-tom">
@@ -144,7 +144,7 @@ function renderArticlesDirect(articles) {
         <div class="container">
             <div class="footer-content">
                 <div class="footer-logo">
-                    <h2>NexusAI</h2>
+                    <h2>NexusAInews.com <span style='font-size:0.7em; font-weight:normal; vertical-align:super; color:#888;'>v3.0</span></h2>
                     <p>Your hub for the latest in artificial intelligence</p>
                 </div>
                 <div class="footer-links">
@@ -173,27 +173,6 @@ function renderArticlesDirect(articles) {
 
     <!-- Forced Subscription Popup -->
     <div id="subscribe-popup" class="popup-container force-subscription">
-        <div class="popup-content">
-            <h3>Stay Updated with AI News</h3>
-            <p>To continue reading NexusAI, please subscribe to our newsletter.</p>
-            <!-- Constant Contact Form (may not load) -->
-            <div class="ctct-inline-form" data-form-id="popup-form"></div>
-            
-            <!-- Direct Subscription Form (fallback) -->
-            <div id="direct-subscription-form" class="direct-form">
-                <form id="subscription-form">
-                    <input type="email" id="subscriber-email" placeholder="Your email address" required>
-                    <button type="submit">Subscribe Now</button>
-                </form>
-            </div>
-            
-            <div class="subscription-message"></div>
-        </div>
-    </div>
-    
-    <!-- Overlay to block content until subscribed -->
-    <div id="content-overlay" class="content-overlay hidden"></div>
-    
     <!-- How this site was created Popup -->
     
                 <p><strong>This site was created entirely by using Windsurf and a simple human dialog that required no coding on the part of the creator (that's me TK!). Every module used and listed below was created with the AI developer agent guiding me through every step of the process. Honestly, a slightly smarter than average 10-year-old could have done it!</strong></p>
@@ -213,133 +192,6 @@ function renderArticlesDirect(articles) {
     
     <script src="script.js"></script>
     
-    <!-- Begin Constant Contact Active Forms -->
-    <script> var _ctct_m = "d83ddfbb9ab5969af853c3cccdc6729a"; </script>
-    <script id="signupScript" src="//static.ctctcdn.com/js/signup-form-widget/current/signup-form-widget.min.js" async defer></script>
-    <!-- End Constant Contact Active Forms -->
-    
-    <!-- Popup functionality -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Show forced subscription popup after 60 seconds
-            setTimeout(function() {
-                const popup = document.getElementById('subscribe-popup');
-                const overlay = document.getElementById('content-overlay');
-                
-                if (popup && !localStorage.getItem('subscribed')) {
-                    popup.style.display = 'flex';
-                    overlay.classList.remove('hidden');
-                    
-                    // Disable scrolling when popup appears
-                    document.body.style.overflow = 'hidden';
-                }
-            }, 60000); // 60 seconds
-            
-            // Set up direct subscription form
-            const subscriptionForm = document.getElementById('subscription-form');
-            if (subscriptionForm) {
-                subscriptionForm.addEventListener('submit', function(event) {
-                    event.preventDefault();
-                    
-                    // Get the email
-                    const email = document.getElementById('subscriber-email').value;
-                    if (!email) return;
-                    
-                    // Show loading state
-                    document.querySelector('.subscription-message').innerHTML = '<p>Processing your subscription...</p>';
-                    
-                    // Send the email to our API endpoint
-                    fetch('/api/subscribe', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ email: email })
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        console.log('Subscription response:', data);
-                        
-                        // Mark as subscribed regardless of API response
-                        // This ensures users can continue even if API fails
-                        localStorage.setItem('subscribed', 'true');
-                        
-                        // Display success message
-                        document.querySelector('.subscription-message').innerHTML = 
-                            '<p class="success-message">Thank you for subscribing! Enjoy NexusAI.</p>';
-                        
-                        // Allow user to continue after 2 seconds
-                        setTimeout(function() {
-                            document.getElementById('subscribe-popup').style.display = 'none';
-                            document.getElementById('content-overlay').classList.add('hidden');
-                            document.body.style.overflow = 'auto'; // Re-enable scrolling
-                        }, 2000);
-                    })
-                    .catch(error => {
-                        console.error('Subscription error:', error);
-                        // Still mark as subscribed so user can continue
-                        localStorage.setItem('subscribed', 'true');
-                        
-                        // Display success message anyway
-                        document.querySelector('.subscription-message').innerHTML = 
-                            '<p class="success-message">Thank you for subscribing! Enjoy NexusAI.</p>';
-                        
-                        // Allow user to continue after 2 seconds
-                        setTimeout(function() {
-                            document.getElementById('subscribe-popup').style.display = 'none';
-                            document.getElementById('content-overlay').classList.add('hidden');
-                            document.body.style.overflow = 'auto'; // Re-enable scrolling
-                        }, 2000);
-                    });
-                });
-            }
-            
-            // Set up Constant Contact event listener for subscription completion
-            window.addEventListener('message', function(event) {
-                // Check if the message is from Constant Contact
-                if (event.data && typeof event.data === 'string') {
-                    try {
-                        const data = JSON.parse(event.data);
-                        
-                        // Detect successful form submission
-                        if (data.type === 'form:submit:success') {
-                            // Mark as subscribed
-                            localStorage.setItem('subscribed', 'true');
-                            
-                            // Display success message
-                            document.querySelector('.subscription-message').innerHTML = '<p class="success-message">Thank you for subscribing! Enjoy NexusAI.</p>';
-                            
-                            // Allow user to continue after 2 seconds
-                            setTimeout(function() {
-                                document.getElementById('subscribe-popup').style.display = 'none';
-                                document.getElementById('content-overlay').classList.add('hidden');
-                                document.body.style.overflow = 'auto'; // Re-enable scrolling
-                            }, 2000);
-                        }
-                    } catch (e) {
-                        // Not JSON or other error, ignore
-                    }
-                }
-            });
-            
-            // Site info button functionality
-            const siteInfoBtn = document.getElementById('site-info-button');
-            const siteInfoPopup = document.getElementById('site-info-popup');
-            const closeSiteInfoBtn = document.querySelector('#site-info-popup .close-popup');
-            
-            if (siteInfoBtn) {
-                siteInfoBtn.addEventListener('click', function() {
-                    siteInfoPopup.style.display = 'flex';
-                });
-            }
-            
-            if (closeSiteInfoBtn) {
-                closeSiteInfoBtn.addEventListener('click', function() {
-                    siteInfoPopup.style.display = 'none';
-                });
-            }
-        });
-    </script>
     <!-- Direct article loader script -->
     <!-- Replace the entire direct article loader script in index.html with this version -->
 <script>
