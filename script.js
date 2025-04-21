@@ -1,4 +1,71 @@
+console.log('script.js loaded (TOP)');
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded event fired (TOP)');
+    const overlay = document.getElementById('email-overlay');
+    const form = document.getElementById('email-form');
+    const emailInput = document.getElementById('user-email');
+    const closeBtn = document.getElementById('close-email-popup');
+    console.log('Overlay:', overlay, 'Form:', form, 'EmailInput:', emailInput, 'CloseBtn:', closeBtn);
+
+    // Check localStorage for email
+    const storedEmail = localStorage.getItem('userEmail');
+    if (storedEmail) {
+        overlay.style.opacity = '0';
+        setTimeout(() => {
+            overlay.style.display = 'none';
+        }, 300);
+    } else {
+        overlay.style.display = 'flex';
+        overlay.style.opacity = '1';
+    }
+
+    function hideEmailOverlay() {
+        if (overlay) {
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+                overlay.style.display = 'none';
+            }, 300);
+        }
+    }
+
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = emailInput.value.trim();
+            if (email) {
+                fetch('http://localhost:5001/api/submit-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                }).then(res => {
+                    if (!res.ok) throw new Error('Failed to submit email');
+                    localStorage.setItem('userEmail', email);
+                    hideEmailOverlay();
+                    return res.json().catch(() => null);
+                }).catch(err => {
+                    alert('Could not submit your email. Please try again.');
+                    console.error('Email submit error:', err);
+                });
+            }
+        });
+    } else {
+        console.error('Email form not found');
+    }
+
+    if (closeBtn) {
+        closeBtn.onclick = function() {
+            hideEmailOverlay();
+        };
+    } else {
+        console.error('Close button not found');
+    }
+});
+
+console.log('script.js loaded');
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded event fired');
+    
     // Initialize theme
     initTheme();
     

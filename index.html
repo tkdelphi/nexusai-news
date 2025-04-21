@@ -80,7 +80,7 @@ function renderArticlesDirect(articles) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NexusAInews.com v3.0 - Latest AI News & Insights</title>
+    <title>NexusAInews.com v3.5 - Latest AI News & Insights</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -101,7 +101,7 @@ function renderArticlesDirect(articles) {
     <header>
         <div class="container">
             <div class="logo">
-                <h1>NexusAInews.com <span style="font-size:0.7em; font-weight:normal; vertical-align:super; color:#888;">v3.0</span></h1>
+                <h1>NexusAInews.com <span style="font-size:0.7em; font-weight:normal; vertical-align:super; color:#888;">v3.5</span></h1>
             </div>
             <nav class="digital-twin-nav">
                 <div class="ask-tom">
@@ -144,7 +144,7 @@ function renderArticlesDirect(articles) {
         <div class="container">
             <div class="footer-content">
                 <div class="footer-logo">
-                    <h2>NexusAInews.com <span style='font-size:0.7em; font-weight:normal; vertical-align:super; color:#888;'>v3.0</span></h2>
+                    <h2>NexusAInews.com <span style='font-size:0.7em; font-weight:normal; vertical-align:super; color:#888;'>v3.5</span></h2>
                     <p>Your hub for the latest in artificial intelligence</p>
                 </div>
                 <div class="footer-links">
@@ -171,194 +171,17 @@ function renderArticlesDirect(articles) {
         </div>
     </footer>
 
-    <!-- Forced Subscription Popup -->
-    <div id="subscribe-popup" class="popup-container force-subscription">
-    <!-- How this site was created Popup -->
-    
-                <p><strong>This site was created entirely by using Windsurf and a simple human dialog that required no coding on the part of the creator (that's me TK!). Every module used and listed below was created with the AI developer agent guiding me through every step of the process. Honestly, a slightly smarter than average 10-year-old could have done it!</strong></p>
-                
-                <p><strong>NexusAI</strong> is an AI news aggregation site built with modern web technologies:</p>
-                <ul>
-                    <li><strong>Backend:</strong> Python Flask server that fetches and parses RSS feeds from top AI news sources</li>
-                    <li><strong>Frontend:</strong> Responsive HTML/CSS/JavaScript with dynamic content loading</li>
-                    <li><strong>Data Sources:</strong> TechCrunch, VentureBeat, and Wired AI RSS feeds</li>
-                    <li><strong>Features:</strong> Dark/light mode, responsive design, newsletter integration</li>
-                    <li><strong>Deployment:</strong> Hosted on Render.com for seamless cloud deployment</li>
-                </ul>
-                <p>This project demonstrates how modern AI news aggregation can be implemented with clean, accessible design and dynamic content updates.</p>
-            </div>
+    <!-- Email Popup Overlay (like eye-contact-trainer) -->
+    <div id="email-overlay" style="position:fixed;top:0;left:0;right:0;bottom:0;width:100vw;height:100vh;background:rgba(0,0,0,0.55);z-index:99999;display:flex;align-items:center;justify-content:center;">
+        <div class="email-popup-content">
+            <span id="close-email-popup" style="position:absolute;top:10px;right:18px;font-size:3rem;cursor:pointer;background:white;color:red;border-radius:50%;padding:0 1rem;">&times;</span>
+            <h2>Enter your email to continue</h2>
+            <form id="email-form">
+                <input type="email" id="user-email" placeholder="Your email address" required autocomplete="email" />
+                <button type="submit">Continue</button>
+            </form>
         </div>
     </div>
-    
     <script src="script.js"></script>
-    
-    <!-- Direct article loader script -->
-    <!-- Replace the entire direct article loader script in index.html with this version -->
-<script>
-// Direct article loading as a backup
-window.addEventListener('load', function() {
-    // Check if articles have been loaded after 3 seconds
-    setTimeout(function() {
-        const heroArticle = document.getElementById('hero-article');
-        const featuredArticles = document.getElementById('featured-articles');
-        
-        // If still showing loading state, try to load directly
-        if (heroArticle.innerHTML.includes('Loading headline article...') ||
-            featuredArticles.innerHTML.includes('Loading articles...')) {
-            
-            console.log('Articles not loaded after timeout, trying direct fetch...');
-            
-            // Determine API base URL dynamically
-            const apiBaseUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-                ? 'http://localhost:5001'
-                : ''; // Empty string means same domain for production
-            
-            console.log('Using API base URL:', apiBaseUrl);
-            
-            // Direct fetch for hero
-            fetch(`${apiBaseUrl}/api/hero`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.article) {
-                        renderHeroArticleDirect(data.article);
-                    }
-                })
-                .catch(err => console.error('Direct hero fetch failed:', err));
-            
-            // Direct fetch for articles
-            fetch(`${apiBaseUrl}/api/articles?limit=12`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.articles && data.articles.length > 0) {
-                        renderArticlesDirect(data.articles);
-                    }
-                })
-                .catch(err => console.error('Direct articles fetch failed:', err));
-        }
-    }, 3000); // Wait 3 seconds
-});
-
-// Direct render functions - FIXED VERSION WITHOUT LOGO IMAGES
-function renderHeroArticleDirect(article) {
-    const heroArticleElement = document.getElementById('hero-article');
-    
-    heroArticleElement.innerHTML = `
-        <img src="${article.image}" alt="${article.title}">
-        <div class="hero-article-content">
-            <div class="source-info">
-                <span class="source-name">${article.source.name}</span>
-            </div>
-            <h2>${article.title}</h2>
-            <a href="${article.link}" class="read-more" target="_blank">Read Full Article</a>
-        </div>
-    `;
-}
-
-function renderArticlesDirect(articles) {
-    const featuredArticlesElement = document.getElementById('featured-articles');
-    
-    featuredArticlesElement.innerHTML = articles.map(article => `
-        <div class="article-card">
-            <img src="${article.image}" alt="${article.title}">
-            <div class="article-card-content">
-                <div class="source-info">
-                    <span class="source-name">${article.source.name}</span>
-                </div>
-                <h3>${article.title}</h3>
-                <a href="${article.link}" class="read-more" target="_blank">Read Full Article</a>
-            </div>
-        </div>
-    `).join('');
-}
-</script>
-    <!-- Add this script at the bottom of index.html, right before the closing </body> tag -->
-<!-- Aggressive cleanup script removed to fix scrolling bug -->
-        console.log("Running aggressive artifact cleanup");
-        
-        // 1. Directly target any small text node containing TechCrunch
-        document.querySelectorAll('*').forEach(el => {
-            // Skip elements that are supposed to contain the text
-            if (el.classList.contains('source-name') || 
-                el.tagName === 'H3' || 
-                el.tagName === 'H2') {
-                return;
-            }
-            
-            // Check if this element *only* contains TechCrunch or VentureBeat text
-            if (el.childNodes.length === 1 && 
-                el.childNodes[0].nodeType === Node.TEXT_NODE) {
-                const text = el.childNodes[0].textContent.trim();
-                if (text === 'TechCrunch' || text === 'VentureBeat' || text === 'Wired') {
-                    console.log("Removing artifact text element:", el);
-                    el.style.display = 'none';
-                    el.innerHTML = '';
-                }
-            }
-        });
-        
-        // 2. Find any image with techcrunch in alt and remove if not in proper container
-        document.querySelectorAll('img').forEach(img => {
-            if ((img.alt && img.alt.toLowerCase().includes('techcrunch')) || 
-                (img.src && img.src.toLowerCase().includes('techcrunch'))) {
-                
-                // Check if this image is outside a proper article card
-                let isInsideCard = false;
-                let parent = img.parentElement;
-                
-                while (parent && parent !== document.body) {
-                    if (parent.classList.contains('article-card') || 
-                        parent.classList.contains('hero-article') ||
-                        parent.classList.contains('source-info')) {
-                        isInsideCard = true;
-                        break;
-                    }
-                    parent = parent.parentElement;
-                }
-                
-                // Remove if outside a proper card
-                if (!isInsideCard) {
-                    console.log("Removing artifact image:", img);
-                    img.remove();
-                }
-            }
-        });
-        
-        // 3. Find single-letter orphan text nodes (like leftover parts)
-        document.querySelectorAll('*').forEach(el => {
-            if (el.childNodes.length === 1 && 
-                el.childNodes[0].nodeType === Node.TEXT_NODE &&
-                el.childNodes[0].textContent.trim().length <= 2) {
-                el.innerHTML = '';
-            }
-        });
-    }
-    
-    // Run the cleanup immediately and repeatedly
-    removeArtifacts();
-    
-    // Run several times to catch any that appear after initial load
-    setTimeout(removeArtifacts, 500);
-    setTimeout(removeArtifacts, 1000);
-    setTimeout(removeArtifacts, 2000);
-    
-    // Also set up a MutationObserver to watch for changes and clean up as needed
-    const observer = new MutationObserver(function() {
-        removeArtifacts();
-    });
-    
-    // Observe the entire document for changes
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-        characterData: true
-    });
-    
-    // Also run the cleanup after any image loads
-    document.addEventListener('load', function(event) {
-        if (event.target.tagName === 'IMG') {
-            setTimeout(removeArtifacts, 100);
-        }
-    }, true);
-
 </body>
 </html>

@@ -23,8 +23,16 @@ class CustomHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
 
 Handler = CustomHTTPRequestHandler
 
-# Create the server
-with socketserver.TCPServer(("", PORT), Handler) as httpd:
-    print(f"Serving at http://localhost:{PORT}")
-    # Serve until process is killed
-    httpd.serve_forever()
+if __name__ == "__main__":
+    import sys
+    import webbrowser
+    from threading import Timer
+    if len(sys.argv) > 1:
+        PORT = int(sys.argv[1])
+    def open_browser():
+        webbrowser.open(f"http://localhost:{PORT}/index.html")
+    Timer(1, open_browser).start()
+    with socketserver.TCPServer(("", PORT), Handler) as httpd:
+        print(f"Serving at http://localhost:{PORT}")
+        # Serve until process is killed
+        httpd.serve_forever()

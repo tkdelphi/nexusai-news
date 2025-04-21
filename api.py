@@ -551,6 +551,24 @@ def get_hero_article():
         'lastUpdated': articles_cache['last_updated'].isoformat() if articles_cache['last_updated'] else None
     })
 
+@app.route('/api/submit-email', methods=['POST'])
+def submit_email():
+    data = request.get_json()
+    email = data.get('email')
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+    # Prevent duplicate emails
+    email_file = 'emails.txt'
+    if os.path.exists(email_file):
+        with open(email_file, 'r') as f:
+            existing_emails = set(line.strip().lower() for line in f)
+    else:
+        existing_emails = set()
+    if email.lower() not in existing_emails:
+        with open(email_file, 'a') as f:
+            f.write(email + '\n')
+    return jsonify({'message': 'Email received'}), 200
+
 if __name__ == '__main__':
     # Set the port, use 5001 if not specified
     port = int(os.environ.get('PORT', 5001))
