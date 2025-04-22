@@ -591,6 +591,22 @@ def submit_email():
         session.close()
 
 
+@app.route('/api/admin/view-emails')
+def view_emails():
+    secret = request.args.get('secret')
+    if secret != 'uN7xQ9bK2eP4sV1z':  # Auto-generated secret key for admin access
+        return "Unauthorized", 401
+    session = SessionLocal()
+    try:
+        emails = session.query(Email).order_by(Email.submitted_at.desc()).all()
+        email_list = [e.email for e in emails]
+        return jsonify({'emails': email_list, 'count': len(email_list)})
+    except Exception as e:
+        logger.error(f"Error fetching emails: {str(e)}")
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        session.close()
+
 if __name__ == '__main__':
     # Set the port, use 5001 if not specified
     port = int(os.environ.get('PORT', 5001))
