@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             const email = emailInput.value.trim();
             if (email) {
-                fetch('http://localhost:5001/api/submit-email', {
+                fetch(API_CONFIG.BASE_URL + '/api/submit-email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email })
