@@ -12,6 +12,24 @@ import random
 import logging
 import time
 import os
+from sqlalchemy import create_engine, Column, String, Integer, DateTime, func
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+
+# Database config
+DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://emails_zk3o_user:Ug6KfBi12bSWdPxaECkux0S3lYmpoYSs@dpg-d03p3gqdbo4c738k5t7g-a/emails_zk3o')
+engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+class Email(Base):
+    __tablename__ = 'emails'
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String, unique=True, index=True, nullable=False)
+    submitted_at = Column(DateTime(timezone=True), server_default=func.now())
+
+# Create the table if it doesn't exist
+Base.metadata.create_all(bind=engine)
 
 # Configure logging
 logging.basicConfig(
@@ -557,17 +575,21 @@ def submit_email():
     email = data.get('email')
     if not email:
         return jsonify({'error': 'Email is required'}), 400
-    # Prevent duplicate emails
-    email_file = 'emails.txt'
-    if os.path.exists(email_file):
-        with open(email_file, 'r') as f:
-            existing_emails = set(line.strip().lower() for line in f)
-    else:
-        existing_emails = set()
-    if email.lower() not in existing_emails:
-        with open(email_file, 'a') as f:
-            f.write(email + '\n')
-    return jsonify({'message': 'Email received'}), 200
+    session = SessionLocal()
+    try:
+        existing = session.query(Email).filter(Email.email == email.lower()).first()
+        if not existing:
+            new_email = Email(email=email.lower())
+            session.add(new_email)
+            session.commit()
+        return jsonify({'message': 'Email received'}), 200
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Database error: {str(e)}")
+        return jsonify({'error': 'Database error'}), 500
+    finally:
+        session.close()
+
 
 if __name__ == '__main__':
     # Set the port, use 5001 if not specified
