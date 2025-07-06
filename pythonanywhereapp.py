@@ -16,24 +16,6 @@ import logging
 import time
 import os
 import json
-from sqlalchemy import create_engine, Column, String, Integer, DateTime, func
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
-
-# Database config
-DATABASE_URL = os.getenv('DATABASE_URL', 'postgresql://emails_zk3o_user:Ug6KfBi12bSWdPxaECkux0S3lYmpoYSs@dpg-d03p3gqdbo4c738k5t7g-a/emails_zk3o')
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
-
-class Email(Base):
-    __tablename__ = 'emails'
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    submitted_at = Column(DateTime(timezone=True), server_default=func.now())
-
-# Create the table if it doesn't exist
-Base.metadata.create_all(bind=engine)
 
 # Configure logging
 logging.basicConfig(
@@ -372,42 +354,6 @@ def static_files(path):
 
 # API routes
 
-@app.route('/api/submit-email', methods=['POST'])
-def submit_email():
-    data = request.get_json()
-    email = data.get('email')
-    if not email:
-        return jsonify({'error': 'Email is required'}), 400
-    session = SessionLocal()
-    try:
-        existing = session.query(Email).filter(Email.email == email.lower()).first()
-        if not existing:
-            new_email = Email(email=email.lower())
-            session.add(new_email)
-            session.commit()
-        return jsonify({'message': 'Email received'}), 200
-    except Exception as e:
-        session.rollback()
-        logger.error(f"Database error: {str(e)}")
-        return jsonify({'error': 'Database error'}), 500
-    finally:
-        session.close()
-
-@app.route('/api/admin/view-emails')
-def view_emails():
-    secret = request.args.get('secret')
-    if secret != 'uN7xQ9bK2eP4sV1z':  # Auto-generated secret key for admin access
-        return "Unauthorized", 401
-    session = SessionLocal()
-    try:
-        emails = session.query(Email).order_by(Email.submitted_at.desc()).all()
-        email_list = [e.email for e in emails]
-        return jsonify({'emails': email_list, 'count': len(email_list)})
-    except Exception as e:
-        logger.error(f"Error fetching emails: {str(e)}")
-        return jsonify({'error': 'Database error'}), 500
-    finally:
-        session.close()
 @app.route('/api/summary')
 def api_summary():
     """Generate a text summary of all articles"""
@@ -527,3 +473,4 @@ if __name__ == '__main__':
     # If run directly, start the server
     port = int(os.environ.get('PORT', 5001))
     app.run(host='0.0.0.0', port=port, debug=True)
+
